@@ -238,11 +238,7 @@ async fn handle_message_event(
         }
     }
 
-    let base_conversation_id = if let Some(ref thread_ts) = msg_event.origin.thread_ts {
-        format!("slack:{}:{}:{}", team_id_str, channel_id, thread_ts.0)
-    } else {
-        format!("slack:{}:{}", team_id_str, channel_id)
-    };
+    let base_conversation_id = format!("slack:{}:{}", team_id_str, channel_id);
     let conversation_id =
         apply_runtime_adapter_to_conversation_id(&adapter_state.runtime_key, base_conversation_id);
 
@@ -376,11 +372,7 @@ async fn handle_app_mention_event(
         return Ok(());
     }
 
-    let base_conversation_id = if let Some(ref thread_ts) = mention.origin.thread_ts {
-        format!("slack:{}:{}:{}", team_id_str, channel_id, thread_ts.0)
-    } else {
-        format!("slack:{}:{}", team_id_str, channel_id)
-    };
+    let base_conversation_id = format!("slack:{}:{}", team_id_str, channel_id);
     let conversation_id =
         apply_runtime_adapter_to_conversation_id(&adapter_state.runtime_key, base_conversation_id);
 
@@ -658,11 +650,7 @@ async fn handle_interaction_event(
     // Use trigger_id as the unique message id for this interaction turn.
     let msg_id = block_actions.trigger_id.0.clone();
 
-    let base_conversation_id = if let Some(ref ts) = message_ts {
-        format!("slack:{}:{}:{}", team_id, channel_id, ts)
-    } else {
-        format!("slack:{}:{}", team_id, channel_id)
-    };
+    let base_conversation_id = format!("slack:{}:{}", team_id, channel_id);
     let conversation_id =
         apply_runtime_adapter_to_conversation_id(&adapter_state.runtime_key, base_conversation_id);
 
