@@ -494,7 +494,16 @@ impl Messaging for MattermostAdapter {
                                                         .data
                                                         .get("post")
                                                         .and_then(|v| v.as_str())
-                                                        .and_then(|s| serde_json::from_str::<MattermostPost>(s).ok());
+                                                        .map(|s| serde_json::from_str::<MattermostPost>(s));
+
+                                                    let post_result = match post_result {
+                                                        Some(Ok(p)) => Some(p),
+                                                        Some(Err(error)) => {
+                                                            tracing::debug!(%error, "failed to parse Mattermost WS post payload");
+                                                            None
+                                                        }
+                                                        None => None,
+                                                    };
 
                                                     if let Some(mut post) = post_result {
                                                         if post.user_id != bot_user_id.as_ref() {
@@ -675,6 +684,16 @@ impl Messaging for MattermostAdapter {
 
             OutboundResponse::StreamEnd => {
                 self.stop_typing(channel_id).await;
+                let root_id = message
+                    .metadata
+                    .get("mattermost_root_id")
+                    .and_then(|v| v.as_str())
+                    .or_else(|| {
+                        message
+                            .metadata
+                            .get(crate::metadata_keys::REPLY_TO_MESSAGE_ID)
+                            .and_then(|v| v.as_str())
+                    });
                 if let Some(active) = self.active_messages.write().await.remove(&message.id) {
                     let chunks = split_message(&active.accumulated_text, MAX_MESSAGE_LENGTH);
                     let mut first = true;
@@ -685,7 +704,7 @@ impl Messaging for MattermostAdapter {
                                 tracing::warn!(%error, "failed to finalize streaming message");
                             }
                         } else {
-                            if let Err(error) = self.create_post(channel_id, &chunk, None).await {
+                            if let Err(error) = self.create_post(channel_id, &chunk, root_id).await {
                                 tracing::warn!(%error, "failed to create overflow chunk for streaming message");
                             }
                         }

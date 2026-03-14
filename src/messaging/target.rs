@@ -279,12 +279,12 @@ fn extract_mattermost_adapter_from_channel_id(channel_id: &str) -> String {
     //                      or: "mattermost:{team_id}:dm:{user_id}" (4 parts, 3rd part = "dm")
     let parts: Vec<&str> = channel_id.split(':').collect();
     match parts.as_slice() {
-        ["mattermost", instance, _, channel_or_team] if *channel_or_team != "dm" => {
-            format!("mattermost:{instance}")
-        }
-        ["mattermost", instance, _, "dm", _] => {
-            format!("mattermost:{instance}")
-        }
+        // Default DM: mattermost:{team_id}:dm:{user_id} — must come before the named-channel arm
+        ["mattermost", _, "dm", _] => "mattermost".to_string(),
+        // Named DM: mattermost:{instance}:{team_id}:dm:{user_id}
+        ["mattermost", instance, _, "dm", _] => format!("mattermost:{instance}"),
+        // Named channel: mattermost:{instance}:{team_id}:{channel_id}
+        ["mattermost", instance, _, _] => format!("mattermost:{instance}"),
         _ => "mattermost".to_string(),
     }
 }
@@ -304,8 +304,8 @@ fn normalize_mattermost_target(raw_target: &str) -> Option<String> {
     let target = strip_repeated_prefix(raw_target, "mattermost");
     // Parse out just the channel_id or dm:{user_id}, discarding any team/instance prefix.
     match target.split(':').collect::<Vec<_>>().as_slice() {
-        // Already bare: "channel_id" or "dm:user_id"
-        [channel_id] if !channel_id.is_empty() => Some((*channel_id).to_string()),
+        // Already bare: "channel_id" (but not the bare word "dm" without a user_id)
+        [channel_id] if !channel_id.is_empty() && *channel_id != "dm" => Some((*channel_id).to_string()),
         ["dm", user_id] if !user_id.is_empty() => Some(format!("dm:{user_id}")),
         // With team prefix: "team_id:channel_id" or "team_id:dm:user_id"
         [_team_id, channel_id] if !channel_id.is_empty() && *channel_id != "dm" => {
