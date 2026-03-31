@@ -220,6 +220,13 @@ export function WebChatPanel({agentId}: WebChatPanelProps) {
 		queryFn: () => api.getConversationDefaults(agentId),
 	});
 
+	const agentsQuery = useQuery({
+		queryKey: ["agents"],
+		queryFn: () => api.agents(),
+		staleTime: 10_000,
+	});
+	const agentDisplayName = agentsQuery.data?.agents.find((a) => a.id === agentId)?.display_name;
+
 	const liveState = liveStates[activeConversationId];
 	const timeline = liveState?.timeline ?? [];
 	const isTyping = liveState?.isTyping ?? false;
@@ -322,7 +329,7 @@ export function WebChatPanel({agentId}: WebChatPanelProps) {
 				{/* Header */}
 				<div className="flex items-center justify-between border-b border-app-line px-4 py-2">
 					<div className="flex items-center gap-2">
-						<h2 className="text-sm font-medium">{agentId}</h2>
+						<h2 className="text-sm font-medium">{agentDisplayName || agentId}</h2>
 						{defaults && (
 							<span className="text-xs text-ink-faint">
 								{defaults.available_models.find((m) => m.id === (settings.model || defaults.model))?.name
