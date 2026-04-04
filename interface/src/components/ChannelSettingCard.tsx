@@ -1181,7 +1181,7 @@ function BindingForm({
 						/>
 						Require @mention or reply to bot
 					</label>
-					<p className="mt-1.5 text-xs text-ink-faint">Blocks messages entirely — the agent won't see them at all. To let the agent read all messages but only respond to mentions, use Mention Only mode in Channels settings (cog icon).</p>
+					<p className="mt-1.5 text-xs text-ink-faint">Blocks messages entirely — the agent won't see them at all. To let the agent read all messages but only respond to commands, mentions, or replies, use Mention Only mode in Channels settings (cog icon).</p>
 				</div>
 			)}
 
